@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Honeypot - Cybersecurity Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --charcoal-dark: #0f1419;
+            --charcoal-medium: #1a1f2e;
+            --charcoal-light: #252b3b;
+            --indigo-electric: #6366f1;
+            --indigo-bright: #818cf8;
+            --indigo-glow: rgba(99, 102, 241, 0.3);
+            --warning-red: #ef4444;
+            --success-green: #10b981;
+            --amber-warn: #f59e0b;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --glass-bg: rgba(37, 43, 59, 0.6);
+            --glass-border: rgba(99, 102, 241, 0.2);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: linear-gradient(135deg, var(--charcoal-dark) 0%, #0a0e1a 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            animation: gridScroll 20s linear infinite;
+        }
+        
+        @keyframes gridScroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .dashboard-container {
+            position: relative;
+            z-index: 1;
+            padding: 2rem;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem 2rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--indigo-electric), var(--indigo-bright));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 20px var(--indigo-glow);
+        }
+        
+        .project-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--text-primary), var(--indigo-bright));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success-green);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--success-green); }
+            50% { opacity: 0.5; box-shadow: 0 0 5px var(--success-green); }
+        }
+        
+        /* Main Grid Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Terminal Section */
+        .terminal-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .terminal-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .terminal-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .control-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            opacity: 0.5;
+        }
+        
+        .terminal-window {
+            background: rgba(15, 20, 25, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: 450px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        
+        .terminal-window::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .terminal-window::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 4px;
+        }
+        
+        .terminal-window::-webkit-scrollbar-thumb {
+            background: var(--indigo-electric);
+            border-radius: 4px;
+        }
+        
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        .terminal-timestamp {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            min-width: 70px;
+        }
+        
+        .terminal-content {
+            flex: 1;
+        }
+        
+        .terminal-analyzing { color: var(--indigo-bright); }
+        .terminal-success { color: var(--success-green); }
+        .terminal-warning { color: var(--amber-warn); }
+        .terminal-error { color: var(--warning-red); }
+        
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: var(--indigo-bright);
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        /* Intel Cards Panel */
+        .intel-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .intel-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .intel-card.new-capture {
+            animation: glowPulse 2s ease-in-out;
+            border-color: var(--indigo-electric);
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 0 30px var(--indigo-glow), 0 8px 32px rgba(0, 0, 0, 0.3); }
+        }
+        
+        .intel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .intel-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .intel-badge {
+            padding: 0.25rem 0.75rem;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--warning-red);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--warning-red);
+        }
+        
+        .intel-data {
+            background: rgba(15, 20, 25, 0.6);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Monaco', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .data-label {
+            color: var(--text-secondary);
+        }
+        
+        .data-value {
+            color: var(--indigo-bright);
+            font-weight: 600;
+        }
+        
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .chart-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        .chart-container {
+            height: 200px;
+            position: relative;
+        }
+        
+        /* Glowing Line Chart */
+        .line-chart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, var(--indigo-electric), var(--indigo-bright));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(90deg, var(--indigo-bright), var(--text-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Action Button */
+        .action-section {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .report-button {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 3rem;
+            background: linear-gradient(135deg, #dc2626, var(--warning-red));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .report-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.6);
+        }
+        
+        .report-button:active {
+            transform: translateY(0);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-section">
+                <div class="logo-icon">🍯</div>
+                <h1 class="project-title">PROJECT HONEYPOT</h1>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>AI AGENT ACTIVE</span>
+            </div>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value" id="totalInterceptions">247</div>
+                <div class="stat-label">Total Interceptions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-value" id="avgEngagement">8.4m</div>
+                <div class="stat-label">Avg Engagement</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔒</div>
+                <div class="stat-value" id="dataPoints">1,834</div>
+                <div class="stat-label">Data Points Captured</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="successRate">94%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+        
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Terminal Section -->
+            <div class="terminal-section">
+                <div class="terminal-header">
+                    <div class="terminal-title">
+                        <span>⚙️</span>
+                        AI AGENT THOUGHT PROCESS
+                    </div>
+                    <div class="terminal-controls">
+                        <div class="control-dot" style="background: #ef4444;"></div>
+                        <div class="control-dot" style="background: #f59e0b;"></div>
+                        <div class="control-dot" style="background: #10b981;"></div>
+                    </div>
+                </div>
+                <div class="terminal-window" id="terminal">
+                    <!-- Terminal content will be added by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Intel Panel -->
+            <div class="intel-panel">
+                <div class="intel-card" id="intelCard1">
+                    <div class="intel-header">
+                        <div class="intel-title">Intercepted Intel #1</div>
+                        <div class="intel-badge">CAPTURED</div>
+                    </div>
+                    <div class="intel-data">
+                        <div class="data-item">
+                            <span class="data-label">UPI ID:</span>
+                            <span class="data-value">scammer@paytm</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Bank:</span>
+                            <span class="data-value">HDFC Bank</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Phone:</span>
+                            <span class="data-value">+91-9876543210</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Location:</span>
+                            <span class="data-value">Mumbai, MH</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="intel-card" id="intelCard2">
+                    <div class="intel-header">
+                        <div class="intel-title">Intercepted Intel #2</div>
+                        <div class="intel-badge">CAPTURED</div>
+                    </div>
+                    <div class="intel-data">
+                        <div class="data-item">
+                            <span class="data-label">UPI ID:</span>
+                            <span class="data-value">fraud123@okaxis</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Bank:</span>
+                            <span class="data-value">Axis Bank</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Phone:</span>
+                            <span class="data-value">+91-8765432109</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Location:</span>
+                            <span class="data-value">Delhi, DL</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="intel-card" id="intelCard3">
+                    <div class="intel-header">
+                        <div class="intel-title">Intercepted Intel #3</div>
+                        <div class="intel-badge">NEW</div>
+                    </div>
+                    <div class="intel-data">
+                        <div class="data-item">
+                            <span class="data-label">UPI ID:</span>
+                            <span class="data-value">fake@ybl</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Bank:</span>
+                            <span class="data-value">SBI</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Phone:</span>
+                            <span class="data-value">+91-7654321098</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Location:</span>
+                            <span class="data-value">Bengaluru, KA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-title">📊 Scammer Engagement Time</div>
+                <div class="chart-container">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">📈 Interceptions Over Time</div>
+                <div class="chart-container">
+                    <canvas id="interceptionsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Section -->
+        <div class="action-section">
+            <button class="report-button" onclick="reportToAuthorities()">
+                <span>🚨</span>
+                <span>REPORT TO AUTHORITIES</span>
+            </button>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Terminal simulation
+        const terminal = document.getElementById('terminal');
+        const terminalMessages = [
+            { type: 'analyzing', msg: 'Initializing AI Agent...', delay: 500 },
+            { type: 'success', msg: 'Connection established with scammer endpoint', delay: 1200 },
+            { type: 'analyzing', msg: 'Analyzing scammer intent...', delay: 2000 },
+            { type: 'warning', msg: 'Detected phishing attempt - UPI request identified', delay: 3200 },
+            { type: 'analyzing', msg: 'Deploying "Confused Persona" strategy...', delay: 4500 },
+            { type: 'success', msg: 'Persona activated - scammer engagement initiated', delay: 5800 },
+            { type: 'analyzing', msg: 'Extracting metadata from conversation...', delay: 7200 },
+            { type: 'success', msg: 'UPI ID captured: fake@ybl', delay: 8500 },
+            { type: 'success', msg: 'Phone number logged: +91-7654321098', delay: 9800 },
+            { type: 'analyzing', msg: 'Cross-referencing with known fraud databases...', delay: 11200 },
+            { type: 'warning', msg: 'Match found - suspect linked to 12 previous cases', delay: 12800 },
+            { type: 'analyzing', msg: 'Extending engagement to gather more intel...', delay: 14500 },
+            { type: 'success', msg: 'Bank details intercepted - SBI account', delay: 16200 },
+            { type: 'analyzing', msg: 'Geolocation tracking in progress...', delay: 17800 },
+            { type: 'success', msg: 'Location identified: Bengaluru, Karnataka', delay: 19500 },
+            { type: 'success', msg: 'Intel package compiled and ready for authorities', delay: 21000 },
+        ];
+        
+        let messageIndex = 0;
+        
+        function addTerminalLine(type, message) {
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const line = document.createElement('div');
+            line.className = `terminal-line terminal-${type}`;
+            line.innerHTML = `
+                <span class="terminal-timestamp">[${timestamp}]</span>
+                <span class="terminal-content">${message}</span>
+            `;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function simulateTerminal() {
+            if (messageIndex < terminalMessages.length) {
+                const { type, msg, delay } = terminalMessages[messageIndex];
+                setTimeout(() => {
+                    addTerminalLine(type, msg);
+                    messageIndex++;
+                    simulateTerminal();
+                }, delay);
+            } else {
+                // Loop back after completion
+                setTimeout(() => {
+                    terminal.innerHTML = '';
+                    messageIndex = 0;
+                    simulateTerminal();
+                }, 5000);
+            }
+        }
+        
+        // Trigger new intel card glow effect
+        function triggerNewCapture(cardId) {
+            const card = document.getElementById(cardId);
+            card.classList.add('new-capture');
+            setTimeout(() => {
+                card.classList.remove('new-capture');
+            }, 2000);
+        }
+        
+        // Initialize charts with glowing effect
+        const ctx1 = document.getElementById('engagementChart').getContext('2d');
+        const gradient1 = ctx1.createLinearGradient(0, 0, 0, 200);
+        gradient1.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+        gradient1.addColorStop(1, 'rgba(99, 102, 241, 0)');
+        
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00'],
+                datasets: [{
+                    label: 'Engagement (minutes)',
+                    data: [3.2, 5.8, 7.4, 6.1, 8.9, 7.2, 9.3],
+                    borderColor: '#6366f1',
+                    backgroundColor: gradient1,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#818cf8',
+                    pointBorderColor: '#6366f1',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    shadowColor: 'rgba(99, 102, 241, 0.5)',
+                    shadowBlur: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 20, 25, 0.9)',
+                        borderColor: '#6366f1',
+                        borderWidth: 1,
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#94a3b8',
+                        padding: 12,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(99, 102, 241, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: { color: '#94a3b8', font: { size: 11 } }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { color: '#94a3b8', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+        
+        const ctx2 = document.getElementById('interceptionsChart').getContext('2d');
+        const gradient2 = ctx2.createLinearGradient(0, 0, 0, 200);
+        gradient2.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+        gradient2.addColorStop(1, 'rgba(16, 185, 129, 0)');
+        
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Interceptions',
+                    data: [28, 35, 42, 38, 45, 41, 48],
+                    borderColor: '#10b981',
+                    backgroundColor: gradient2,
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#34d399',
+                    pointBorderColor: '#10b981',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 20, 25, 0.9)',
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#94a3b8',
+                        padding: 12,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(16, 185, 129, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: { color: '#94a3b8', font: { size: 11 } }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { color: '#94a3b8', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+        
+        // Report button function
+        function reportToAuthorities() {
+            alert('🚨 Compiling intelligence report for law enforcement...\n\nAll captured data will be securely transmitted to:\n• Cyber Crime Portal\n• Local Police Department\n• Financial Intelligence Unit');
+        }
+        
+        // Start terminal simulation
+        simulateTerminal();
+        
+        // Trigger new capture animation periodically
+        setTimeout(() => triggerNewCapture('intelCard3'), 8500);
+        setTimeout(() => triggerNewCapture('intelCard1'), 15000);
+        
+        // Update stats with animation
+        function animateValue(id, start, end, duration, suffix = '') {
+            const obj = document.getElementById(id);
+            const range = end - start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            let current = start;
+            const timer = setInterval(() => {
+                current += increment;
+                obj.textContent = current + suffix;
+                if (current === end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+        
+        // Periodically update stats
+        setInterval(() => {
+            const currentInterceptions = parseInt(document.getElementById('totalInterceptions').textContent);
+            animateValue('totalInterceptions', currentInterceptions, currentInterceptions + Math.floor(Math.random() * 3), 1000);
+            
+            const currentDataPoints = parseInt(document.getElementById('dataPoints').textContent.replace(',', ''));
+            const newDataPoints = currentDataPoints + Math.floor(Math.random() * 10);
+            document.getElementById('dataPoints').textContent = newDataPoints.toLocaleString();
+        }, 30000);
+    </script>
+</body>
+</html>
